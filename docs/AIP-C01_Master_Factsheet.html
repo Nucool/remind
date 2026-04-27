@@ -92,9 +92,98 @@ a:hover { text-decoration: underline; }
   padding: 24px;
   align-items: start;
 }
+/* ── Mobile sidebar toggle button (hidden on desktop) ── */
+.filter-toggle-btn {
+  display: none;
+}
+/* ── Sidebar overlay backdrop (hidden on desktop) ── */
+.sidebar-overlay {
+  display: none;
+}
+/* ── Mobile close button inside sidebar (hidden on desktop) ── */
+.sidebar-close-btn {
+  display: none;
+}
+
 @media (max-width: 900px) {
-  .layout { grid-template-columns: 1fr; }
-  .sidebar { position: static \!important; }
+  .layout {
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+  /* Sidebar becomes a slide-in overlay */
+  .sidebar {
+    position: fixed !important;
+    top: 0;
+    left: -290px;
+    width: 280px;
+    height: 100dvh;
+    max-height: 100dvh;
+    z-index: 500;
+    border-radius: 0 14px 14px 0;
+    transition: left 0.28s ease;
+    overflow-y: auto;
+    padding-top: 48px;
+  }
+  .sidebar.open {
+    left: 0;
+    box-shadow: 4px 0 24px rgba(0,0,0,0.25);
+  }
+  /* Backdrop overlay */
+  .sidebar-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 499;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.28s ease;
+  }
+  .sidebar-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  /* Floating toggle button */
+  .filter-toggle-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    position: fixed;
+    bottom: 20px;
+    right: 16px;
+    z-index: 498;
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    border-radius: 50px;
+    padding: 11px 18px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+    transition: transform 0.15s, opacity 0.15s;
+  }
+  .filter-toggle-btn:active { transform: scale(0.95); }
+  /* Close button inside sidebar */
+  .sidebar-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    color: var(--fg);
+    font-size: 16px;
+    cursor: pointer;
+    z-index: 10;
+    line-height: 1;
+  }
+  .sidebar-close-btn:hover { background: var(--border); }
 }
 
 /* --- Sidebar --- */
@@ -534,8 +623,13 @@ a:hover { text-decoration: underline; }
   <span id="searchCount" class="topbar-count"></span>
 </div>
 
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+<button class="filter-toggle-btn" id="filterToggleBtn" onclick="toggleSidebar()">
+  <span>☰</span> Filters &amp; Nav
+</button>
 <div class="layout">
-  <aside class="sidebar">
+  <aside class="sidebar" id="mainSidebar">
+    <button class="sidebar-close-btn" onclick="closeSidebar()" title="Close filters">✕</button>
     <div class="nav-heading">Categories (Jump to)</div>
     <a href="#bedrock" class="nav-item" data-cat="bedrock" style="--cat-color: #ff6b35"><span class="nav-icon">B</span><div class="nav-text"><div class="nav-title">Amazon Bedrock &amp; AgentCore</div><div class="nav-sub">Domain 1, 2</div></div></a>
 <a href="#sagemaker" class="nav-item" data-cat="sagemaker" style="--cat-color: #8a2be2"><span class="nav-icon">S</span><div class="nav-text"><div class="nav-title">Amazon SageMaker AI</div><div class="nav-sub">Domain 2, 4, 5</div></div></a>
@@ -8251,6 +8345,34 @@ hint: ระบุ resource arn เฉพาะเสมอ least privilege, iam
       search.blur();
     }
   });
+
+  // ── Mobile sidebar toggle ──────────────────────────
+  function toggleSidebar() {
+    const sidebar = document.getElementById('mainSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    const isOpen = sidebar.classList.contains('open');
+    if (isOpen) {
+      closeSidebar();
+    } else {
+      sidebar.classList.add('open');
+      overlay.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+  }
+  function closeSidebar() {
+    const sidebar = document.getElementById('mainSidebar');
+    const overlay = document.getElementById('sidebarOverlay');
+    sidebar.classList.remove('open');
+    overlay.classList.remove('show');
+    document.body.style.overflow = '';
+  }
+  // Close sidebar when a nav link is clicked (mobile UX)
+  document.querySelectorAll('.sidebar .nav-item').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 900) closeSidebar();
+    });
+  });
+
 })();
 </script>
 </body>
